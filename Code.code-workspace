@@ -1,0 +1,64 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"outline.showConstants": false,
+		"outline.showVariables": false,
+		"outline.showStrings": false,
+
+		"window.title": "${dirty}${rootName}${separator}${activeEditorMedium}",
+		"window.titleSeparator": " _ ",
+		"editor.fontSize": 12, // 字体大小
+		"terminal.integrated.fontFamily": "monospace",
+  		"editor.fontFamily": "FiraCode Nerd Font, Consolas, 'Courier New', monospace",
+		// ## path 不同平台符号不同 
+		// ref: https://stackoverflow.com/questions/53653083/how-to-correctly-set-pythonpath-for-visual-studio-code
+		"terminal.integrated.env.windows": {"PYTHONPATH": "${workspaceFolder};${env:PYTHONPATH}"},
+		"terminal.integrated.env.linux": {"PYTHONPATH": "${workspaceFolder}:${env:PYTHONPATH}"},
+		"terminal.integrated.env.osx": {"PYTHONPATH": "${workspaceFolder}:${env:PYTHONPATH}"},
+		
+		// ## jupyter 
+		"jupyter.notebookFileRoot": "${workspaceFolder}",
+		"jupyter.interactiveWindow.textEditor.executeSelection": true, // 交互模式下执行选中的代码
+		// "notebook.outline.showCodeCells": true 
+		"notebook.lineNumbers": "on",
+
+		// ## python 
+		"[python]": {
+			"editor.defaultFormatter": "ms-python.autopep8"
+		},
+		"python.languageServer": "Pylance", 
+		
+		// ## cpp
+		"code-runner.clearPreviousOutput": true,
+		"code-runner.ignoreSelection": true,
+		"code-runner.preserveFocus": false,
+		"code-runner.runInTerminal": true,
+		"code-runner.saveAllFilesBeforeRun": true,
+		"code-runner.saveFileBeforeRun": true,
+		"C_Cpp.debugShortcut": false,
+		"editor.wordWrap": "on",
+		"notebook.output.wordWrap": true,
+		// 关闭快捷键
+	},
+	"launch": {
+		// debug 运行 python 文件 相对路径
+		"version": "0.2.0",
+		"configurations": [
+			{
+				"name": "Python: run from project home",
+				"type": "python",
+				"request": "launch",
+				"program": "${file}",
+				"console": "integratedTerminal",
+				"justMyCode": true,
+				"env": {
+					"PYTHONPATH": "${workspaceFolder};${env:PYTHONPATH}"
+				},
+			}
+		]
+	}
+}
