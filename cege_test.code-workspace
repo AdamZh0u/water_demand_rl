@@ -50,7 +50,7 @@
 		"configurations": [
 			{
 				"name": "Python: run from project home",
-				"type": "python",
+				"type": "debugpy",
 				"request": "launch",
 				"program": "${file}",
 				"console": "integratedTerminal",
