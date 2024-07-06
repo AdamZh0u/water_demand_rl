@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from statsmodels.tsa.arima.model import ARIMA
 import random
 import datetime
-
+from src.const import PATH_DATA
 
 # Function to generate water demand time series using ARIMA
 def generate_water_demand(n_points=17620, seed=None):
@@ -48,7 +48,7 @@ def simulation(seed=50, num_leaks=10):
         water_demand.copy(), num_leaks=num_leaks, seed=seed)
 
     # Create a time index
-    start_date = datetime.datetime.now()
+    start_date = datetime.datetime.strptime('2024-01-01 00:00', '%Y-%m-%d %H:%M')
     time_index = pd.date_range(start=start_date, periods=len(
         water_demand_with_leaks), freq='15T')
 
@@ -72,17 +72,23 @@ def plot(df):
     plt.xlabel('Timestamp')
     plt.ylabel('Normalized Water Demand')
     plt.title('Simulated Water Demand with Leakages')
-    plt.show()
 
 
 def save(df, seed, num_leaks):
     # Save to Excel
     file_name = 'Data_water_demand_with_leaks_' + \
         str(seed)+'_'+str(num_leaks)+'.txt'
-    from src.const import PATH_DATA
     df.to_csv(PATH_DATA/'simulation'/file_name, index=False)
     print(f'Data saved successfully', file_name)
 
+
+def load(seed, num_leaks):
+    # Load from Excel
+    file_name = 'Data_water_demand_with_leaks_' + \
+        str(seed)+'_'+str(num_leaks)+'.txt'
+
+    df = pd.read_csv(PATH_DATA/'simulation'/file_name)
+    return df
 
 if __name__ == '__main__':
     seed = 50
