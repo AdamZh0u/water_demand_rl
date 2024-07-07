@@ -1,9 +1,9 @@
 import numpy as np
 import random
+import wandb
 
 class AgentGreedy:
-    def __init__(self, env):
-        self.env = env
+    def __init__(self):
         self.record = np.zeros((2, 2)) # n_obs =2  mean = 2   
     
     def update_record(self,action,r):
@@ -24,32 +24,12 @@ class AgentGreedy:
         self.record = np.load(data_path)
         print('record loaded from',data_path)
     
-    def run(self, eps=0.1, train = True):
-        obs = self.env.reset() # not use obs in this case
-        ls_reward = [0]
+    def get_action(self, eps=0.1):
+        # 与观测无关，不需要输入观测
+        # 贪心的选择最佳动作或者随机选择动作 
+        if random.random() > eps: 
+            choice=self.get_best_action()
+        else:
+            choice=random.choice([0, 1])
 
-        terminated = False
-
-        if not train: 
-            # load record if not training 
-            self.load_record()
-
-        while not terminated:
-            # 贪心的选择最佳动作或者随机选择动作 
-            if random.random() > eps: 
-                choice=self.get_best_action()
-            else:
-                choice=random.choice([0, 1])
-
-            obs, reward, terminated, info = self.env.step(choice)
-
-            # 利用新数量和奖励观察值更新数组record
-            self.update_record(choice,reward)
-
-            # 跟踪运行的平均奖励来评估整体表现
-            ls_reward.append(reward)
-
-        if train:
-            self.dump_record()
-
-        return ls_reward
+        return choice

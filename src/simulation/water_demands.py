@@ -7,8 +7,8 @@ import datetime
 from src.const import PATH_DATA
 
 # Function to generate water demand time series using ARIMA
-def generate_water_demand(n_points=17620, seed=None):
-    # (17620 - 100) / 15min /24hours = half year
+def generate_water_demand(n_points=17620+30*24*4, seed=None):
+    # (17620 - 100) / 15min /24hours = 182.5 days 
     if seed is not None:
         np.random.seed(seed)
     # ARIMA parameters

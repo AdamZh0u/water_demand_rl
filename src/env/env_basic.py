@@ -1,9 +1,10 @@
 import gymnasium as gym
+import numpy as np
 from gymnasium import spaces
 
 
 class WaterLeakEnv(gym.Env):
-    def __init__(self, data, window_size=384):
+    def __init__(self, data, train=True, window_size=384):
         """Summary
         Args:
             data (pd.DataFrame): a pandas DataFrame with columns 'WaterDemandWithLeaks' and 'LeakageLabel' and length > window_size
@@ -20,25 +21,30 @@ class WaterLeakEnv(gym.Env):
         self.window_size = window_size
         self.current_step = self.window_size
         self.action_space = spaces.Discrete(2)
+        self.observation_space = spaces.Box(
+            low=-1, high=1, shape=(self.window_size,), dtype=np.float32)
+        self.reward_range = (-10, 10)
+        self.train = train
 
     def reset(self):
-        self.current_step = self.window_size
-        return self._next_observation()
+        if self.train:
+            self.current_step = self.window_size
+        else:
+            self.current_step = 17520
+        return self._next_observation(), self._get_info()
 
     def step(self, action):
-        terminated = self.current_step >= len(self.data) - 1
+        if self.train:
+            terminated = self.current_step >= 17520
+        else:
+            terminated = self.current_step >= len(self.data) - 1
+
         # instant reward
         reward = self._calculate_reward(action)
         info = self._get_info()
         self.current_step += 1
         obs = self._next_observation()
         return obs, reward, terminated, info
-
-    def render(self):
-        pass
-
-    def close(self):
-        pass
 
     def _next_observation(self):
         obs = self.data['WaterDemandWithLeaks'].values[
@@ -60,3 +66,4 @@ class WaterLeakEnv(gym.Env):
                 return -10  # 漏洞未被发现
             else:
                 return 1  # 正常操作
+
