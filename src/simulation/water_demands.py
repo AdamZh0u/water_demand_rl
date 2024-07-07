@@ -20,7 +20,7 @@ def generate_water_demand(n_points=17620+30*24*4, seed=None):
 
 
 # Function to inject leakage events into the time series
-def inject_leakages(time_series, num_leaks, leak_duration_range=(4, 12), leak_increase_range=(0.5, 1), seed=None):
+def inject_leakages(time_series, num_leaks, leak_duration_range=(4, 12), leak_increase_range=(5, 10), seed=None):
     if seed is not None:
         random.seed(seed)
     leakage_labels = np.zeros(len(time_series))

@@ -24,7 +24,7 @@ class AgentGreedy:
         self.record = np.load(data_path)
         print('record loaded from',data_path)
     
-    def get_action(self, eps=0.1):
+    def update(self, eps=0.1):
         # 与观测无关，不需要输入观测
         # 贪心的选择最佳动作或者随机选择动作 
         if random.random() > eps: 
