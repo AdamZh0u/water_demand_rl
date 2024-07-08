@@ -12,7 +12,7 @@ import src.env.env_basic as env_basic
 import src.simulation.water_demands as wd
 
 class ReplayBuffer:
-    ''' 经验回放池 '''
+    ''' Experience Replay Pool '''
 
     def __init__(self, capacity):
         self.buffer = collections.deque(maxlen=capacity)  # 队列,先进先出
@@ -30,20 +30,22 @@ class ReplayBuffer:
 
 
 class Qnet(torch.nn.Module):
-    ''' 只有一层隐藏层的Q网络 '''
+    ''' MLP Q Network'''
 
-    def __init__(self, state_dim, hidden_dim, action_dim):
+    def __init__(self, state_dim, hidden_dim=128, action_dim=2):
         super(Qnet, self).__init__()
         self.fc1 = torch.nn.Linear(state_dim, hidden_dim)
-        self.fc2 = torch.nn.Linear(hidden_dim, action_dim)
+        self.fc2 = torch.nn.Linear(hidden_dim,64)
+        self.fc3 = torch.nn.Linear(64, action_dim)
 
     def forward(self, x):
         x = F.relu(self.fc1(x))  # 隐藏层使用ReLU激活函数
-        return self.fc2(x)
+        x = F.relu(self.fc2(x))
+        return self.fc3(x)
 
 
 class AgentDQN:
-    ''' DQN算法 '''
+    ''' DQN Agent'''
 
     def __init__(self, state_dim, hidden_dim=128, action_dim=2, learning_rate=2e-3, gamma=0.98,
                  epsilon=0.01, target_update=10, device='cpu'):
@@ -120,7 +122,7 @@ def train_on_policy_agent(env, agent, num_episodes):
 
             # run.log(
             #     {'index': info['step'], 'action': action, 'reward': reward})
-            
+    
             transition_dict['states'].append(state)
             transition_dict['actions'].append(action)
             transition_dict['next_states'].append(next_state)
@@ -132,7 +134,7 @@ def train_on_policy_agent(env, agent, num_episodes):
         
         agent.update(transition_dict)
 
-        run.log({'epiosed': epiosed, 'sum_reward': episode_return})
+        run.log({'epiosed': epiosed, 'epiosed_sum_reward': episode_return})
     return agent
 
 
@@ -179,18 +181,19 @@ def test_agent(env, agent, track=True):
         # log to wandb
         sum_rewards += reward
         if track:
-            run.log({'tindex': info['step']-17520, 'taction': action,
-                    "treward": reward, 'tsum_rewards': sum_rewards})
+            run.log({'test_action': action,
+                    "test_step_reward": reward, 'test_sum_reward': sum_rewards})
     return sum_rewards
 
 if __name__ == '__main__':
 
     # ======================== hyperparameters ========================
     lr = 2e-3
-    num_episodes = 50
+    num_episodes = 200
     hidden_dim = 128
-    gamma = 0.98
+    gamma = 0.2
     epsilon = 0.01
+    n_layers = 2
     target_update = 10
     
     obs_len = 10
@@ -198,15 +201,24 @@ if __name__ == '__main__':
     num_leaks = 12
     Env = env_basic.EnvComplexR
 
-    device = torch.device(
-        "cuda") if torch.cuda.is_available() else torch.device("cpu")
-    args = {'lr': lr, 'num_episodes': num_episodes, 'hidden_dim': hidden_dim,
-            'gamma': gamma, 'epsilon': epsilon, 'target_update': target_update,
-            'Env': 'EnvComplexR', 'obs_len': obs_len, 'seed': seed, 'num_leaks': num_leaks}
+    device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+    args = {'lr': lr, 
+            'num_episodes': num_episodes, 
+            'hidden_dim': hidden_dim,
+            'gamma': gamma, 
+            'epsilon': epsilon,
+            'n_layers': n_layers,
+            # 'target_update': target_update,
+            'Env': 'EnvComplexR',
+            'obs_len': obs_len,
+            'seed': seed, 
+            'num_leaks': num_leaks,
+            'on_policy': True,}
 
     # ======================== init ========================
-    run = wandb.init(name='agent_dqn', project='cege_test',
+    run = wandb.init(project='water_demand_rl',
                      config=args, monitor_gym=True)
+    run.name = f'agent_dqn_{run.id}'
 
     torch.manual_seed(seed)
     df = wd.load(seed, num_leaks)
@@ -225,11 +237,12 @@ if __name__ == '__main__':
     # agent = train_off_policy_agent(env, agent, num_episodes)
 
     # dump
-    agent.dump(str(const.PATH_DATA/'train/dqn'))
+    agent_file_path = const.PATH_DATA/f'train/dqn_{run.id}'
+    agent.dump(str(agent_file_path))
 
     # ======================== test ========================
     env.train = False
-    agent.load(str(const.PATH_DATA/'train/dqn'))
+    agent.load(str(agent_file_path))
 
     test_agent(env, agent)
     run.finish()
