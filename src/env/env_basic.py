@@ -10,7 +10,7 @@ class EnvBasic(gym.Env):
         Args:
             data (pd.DataFrame): a pandas DataFrame with columns 'WaterDemandWithLeaks' and 'LeakageLabel' and length > window_size
             window_size (int, optional): the size of the window to be used for the observation space
-            obs_len (int, optional): the length of the observation space
+            obs_len (int, optional): the length of the action space  <= window_size
 
         Method:
             reset: reset the environment to the initial state
@@ -158,7 +158,7 @@ class EnvComplexR(EnvBasic):
         dft2['a_downtime_award'] = - \
             dft2['WaterDemandWithLeaks'].rolling(window=4).sum().shift(-3)
         dft2['a_congestion_award'] = -dft2['TrafficFlow']*0.15
-        dft2['a_environmental_award'] = - \
+        dft2['a_environmental_award'] = \
             np.log1p(dft2['LeakageLabel'].rolling(window=12).sum())
         dft2['a_fix_award'] = np.log1p(
             dft2['LeakageLabel'].rolling(window=12).sum().shift(-11).sum())
