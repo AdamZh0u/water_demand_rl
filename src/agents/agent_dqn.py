@@ -45,7 +45,7 @@ class Qnet(torch.nn.Module):
 
 
 class AgentDQN:
-    ''' DQN Agent'''
+    ''' Double DQN Agent'''
 
     def __init__(self, state_dim, hidden_dim=128, action_dim=2, learning_rate=2e-3, gamma=0.98,
                  epsilon=0.01, target_update=10, device='cpu'):
@@ -189,9 +189,9 @@ if __name__ == '__main__':
 
     # ======================== hyperparameters ========================
     lr = 2e-3
-    num_episodes = 200
+    num_episodes = 500
     hidden_dim = 128
-    gamma = 0.2
+    gamma = 0.6
     epsilon = 0.01
     n_layers = 2
     target_update = 10
