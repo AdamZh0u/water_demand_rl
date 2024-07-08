@@ -6,7 +6,7 @@ class AgentAlways:
     def __init__(self):
         pass
 
-    def get_action(self):
+    def take_action(self, state):
         return 1
 
 class AgentNever:
@@ -16,5 +16,5 @@ class AgentNever:
     def __init__(self):
         pass
 
-    def get_action(self):
+    def take_action(self, state):
         return 0

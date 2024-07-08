@@ -11,7 +11,6 @@ import src.const as const
 import src.env.env_basic as env_basic
 import src.simulation.water_demands as wd
 
-
 class ReplayBuffer:
     ''' 经验回放池 '''
 
@@ -43,11 +42,11 @@ class Qnet(torch.nn.Module):
         return self.fc2(x)
 
 
-class DQN:
+class AgentDQN:
     ''' DQN算法 '''
 
-    def __init__(self, state_dim, hidden_dim, action_dim, learning_rate, gamma,
-                 epsilon, target_update, device):
+    def __init__(self, state_dim, hidden_dim=128, action_dim=2, learning_rate=2e-3, gamma=0.98,
+                 epsilon=0.01, target_update=10, device='cpu'):
         self.action_dim = action_dim
         self.q_net = Qnet(state_dim, hidden_dim,
                           self.action_dim).to(device)  # Q网络
@@ -67,7 +66,7 @@ class DQN:
         if np.random.random() < self.epsilon:
             action = np.random.randint(self.action_dim)
         else:
-            state = torch.tensor([state], dtype=torch.float).to(self.device)
+            state = torch.tensor(state[np.newaxis,:], dtype=torch.float).to(self.device)
             action = self.q_net(state).argmax().item()
         return action
 
@@ -107,7 +106,7 @@ class DQN:
 
 
 def train_on_policy_agent(env, agent, num_episodes):
-    replay_buffer = ReplayBuffer(buffer_size)
+
     for epiosed in tqdm(range(num_episodes)):
         episode_return = 0
         transition_dict = {'states': [], 'actions': [],
@@ -118,9 +117,9 @@ def train_on_policy_agent(env, agent, num_episodes):
         while not done:
             action = agent.take_action(state)
             next_state, reward, done, info,_ = env.step(action)
-            replay_buffer.add(state, action, reward, next_state, done)
-            run.log(
-                {'index': info['step'], 'action': action, 'reward': reward}, commit=False)
+
+            # run.log(
+            #     {'index': info['step'], 'action': action, 'reward': reward})
             
             transition_dict['states'].append(state)
             transition_dict['actions'].append(action)
@@ -149,7 +148,7 @@ def train_off_policy_agent(env, agent, num_episodes):
             next_state, reward, done, info,_ = env.step(action)
             replay_buffer.add(state, action, reward, next_state, done)
             run.log(
-                {'index': info['step'], 'action': action, 'reward': reward}, commit=False)
+                {'index': info['step'], 'action': action, 'reward': reward})
             
             state = next_state
             episode_return += reward
@@ -169,7 +168,7 @@ def train_off_policy_agent(env, agent, num_episodes):
     return agent
 
 
-def test_agent(env, agent):
+def test_agent(env, agent, track=True):
     state, info = env.reset()
     done = False
     sum_rewards = 0
@@ -179,34 +178,31 @@ def test_agent(env, agent):
 
         # log to wandb
         sum_rewards += reward
-        run.log({'tindex': info['step']-17520, 'taction': action,
-                "treward": reward, 'tsum_rewards': sum_rewards})
-
+        if track:
+            run.log({'tindex': info['step']-17520, 'taction': action,
+                    "treward": reward, 'tsum_rewards': sum_rewards})
+    return sum_rewards
 
 if __name__ == '__main__':
 
     # ======================== hyperparameters ========================
     lr = 2e-3
-    num_episodes = 100
+    num_episodes = 50
     hidden_dim = 128
     gamma = 0.98
     epsilon = 0.01
     target_update = 10
-    buffer_size = 10000
-    minimal_size = 500
-    batch_size = 64
-
+    
     obs_len = 10
-    seed = 142
+    seed = 242
     num_leaks = 12
-    Env = env_basic.EnvLowR
+    Env = env_basic.EnvComplexR
 
     device = torch.device(
         "cuda") if torch.cuda.is_available() else torch.device("cpu")
     args = {'lr': lr, 'num_episodes': num_episodes, 'hidden_dim': hidden_dim,
             'gamma': gamma, 'epsilon': epsilon, 'target_update': target_update,
-            'buffer_size': buffer_size, 'minimal_size': minimal_size, 'batch_size': batch_size,
-            'Env': 'EnvLowR', 'obs_len': obs_len, 'seed': seed, 'num_leaks': num_leaks}
+            'Env': 'EnvComplexR', 'obs_len': obs_len, 'seed': seed, 'num_leaks': num_leaks}
 
     # ======================== init ========================
     run = wandb.init(name='agent_dqn', project='cege_test',
@@ -222,18 +218,17 @@ if __name__ == '__main__':
     state_dim = env.observation_space.shape[0]
     action_dim = env.action_space.n
 
-    agent = DQN(state_dim, hidden_dim, action_dim, lr, gamma, epsilon,
+    agent = AgentDQN(state_dim, hidden_dim, action_dim, lr, gamma, epsilon,
                 target_update, device)
 
     agent = train_on_policy_agent(env, agent, num_episodes)
+    # agent = train_off_policy_agent(env, agent, num_episodes)
 
     # dump
     agent.dump(str(const.PATH_DATA/'train/dqn'))
 
     # ======================== test ========================
-    env = Env(df, train=False, obs_len=obs_len)
-    agent = DQN(state_dim, hidden_dim, action_dim, lr, gamma, epsilon,
-                target_update, device)
+    env.train = False
     agent.load(str(const.PATH_DATA/'train/dqn'))
 
     test_agent(env, agent)
