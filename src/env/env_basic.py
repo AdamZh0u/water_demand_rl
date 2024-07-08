@@ -61,19 +61,19 @@ class EnvBasic(gym.Env):
         leak_present = self.data['LeakageLabel'].iloc[self.current_step]
         if action == 1:
             if leak_present:
-                return 10  # 漏洞被发现
+                return 10  
             else:
-                return -5  # 错误的警报
+                return -5  
         else:
             if leak_present:
-                return -10  # 漏洞未被发现
+                return -10  
             else:
-                return 1  # 正常操作
+                return 1 
 
 
-class EnvRelativeDemand(EnvBasic):
+class EnvFeature(EnvBasic):
     """_summary_
-        low reward for normal operation
+        change obs feature
 
     Args:
         WaterLeakEnv (_type_): _description_
@@ -132,7 +132,7 @@ class EnvLowR(EnvBasic):
 
 class EnvComplexR(EnvBasic):
     """_summary_
-        low reward for normal operation
+        complex reward construction
 
     Args:
         WaterLeakEnv (_type_): _description_
